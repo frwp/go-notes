@@ -127,7 +127,7 @@ func (c *Controller) FindNoteById(ctx *gin.Context) {
 }
 
 func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	userId, err := strconv.Atoi(ctx.Param("id"))
 
 	if err != nil {
 		er := errors.New("bad request: bad user id")
@@ -136,7 +136,7 @@ func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
 	}
 
 	var user model.User
-	c.db.First(&user, id)
+	c.db.First(&user, userId)
 
 	if user.ID == 0 {
 		httputil.NewError(ctx, 404, gorm.ErrRecordNotFound)
@@ -158,7 +158,7 @@ func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
 		return
 	}
 
-	if note.UserId != id {
+	if note.UserId != userId {
 		httputil.NewError(ctx, http.StatusForbidden, errors.New("forbidden"))
 		return
 	}
@@ -185,7 +185,7 @@ func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
 		Title: newNote.Title,
 	})
 
-	if oldNote.UserId != id {
+	if oldNote.UserId != userId {
 		er := errors.New("records with this title already exist")
 		httputil.NewError(ctx, 409, er)
 		return
@@ -195,4 +195,45 @@ func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
 	c.db.Model(&oldNote).Updates(&newNote)
 
 	ctx.JSON(http.StatusOK, oldNote)
+}
+
+func (c *Controller) DeleteNote(ctx *gin.Context) {
+	userId, err := strconv.Atoi(ctx.Param("id"))
+
+	if err != nil {
+		er := errors.New("bad request: bad user id")
+		httputil.NewError(ctx, 400, er)
+		return
+	}
+
+	var user model.User
+	c.db.First(&user, userId)
+
+	if user.ID == 0 {
+		httputil.NewError(ctx, 404, gorm.ErrRecordNotFound)
+		return
+	}
+
+	var note model.Note
+	noteId, noteErr := strconv.Atoi(ctx.Param("note_id"))
+	if noteErr != nil {
+		er := errors.New("bad request: bad note id")
+		httputil.NewError(ctx, 400, er)
+		return
+	}
+
+	c.db.First(&note, noteId)
+
+	if note.ID == 0 {
+		httputil.NewError(ctx, 404, errors.New("note not found"))
+		return
+	}
+
+	if note.UserId != userId {
+		httputil.NewError(ctx, http.StatusForbidden, errors.New("forbidden"))
+		return
+	}
+
+	c.db.Delete(&note)
+	ctx.JSON(http.StatusOK, note)
 }

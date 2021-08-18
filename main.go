@@ -64,6 +64,7 @@ func main() {
 			users.GET("/:id/notes", c.FindNotesByUserId)
 			users.POST("/:id/new", c.AddNote)
 			users.PUT("/:id/notes/:note_id", c.UpdateNoteByIdAndUID)
+			users.DELETE("/:id/notes/:note_id", c.DeleteNote)
 		}
 		notes := v1.Group("/notes")
 		{
