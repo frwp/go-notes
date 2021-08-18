@@ -159,7 +159,7 @@ func (c *Controller) UpdateNoteByIdAndUID(ctx *gin.Context) {
 	}
 
 	if note.UserId != id {
-		httputil.NewError(ctx, http.StatusUnauthorized, errors.New("unauthorized"))
+		httputil.NewError(ctx, http.StatusForbidden, errors.New("forbidden"))
 		return
 	}
 
